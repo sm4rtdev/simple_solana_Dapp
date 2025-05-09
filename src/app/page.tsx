@@ -16,23 +16,31 @@ export default function Home() {
       const tx = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: publicKey,
-          toPubkey: publicKey, // test transfer to self
+          toPubkey: publicKey,
           lamports: 1000,
         })
       )
 
       const signature = await sendTransaction(tx, connection)
       await connection.confirmTransaction(signature, 'confirmed')
-      alert(`Transaction successful: ${signature}`)
-    } catch (err: any) {
-      if (err?.message?.includes('User rejected')) {
-        alert('Transaction was cancelled.')
-      } else {
-        console.error(err)
-        alert('Something went wrong.')
-      }
+
+      // ✅ Send to backend
+      await fetch('http://localhost:4000/log-tx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          signature,
+          wallet: publicKey.toBase58(),
+        }),
+      })
+
+      alert(`TX confirmed & logged: ${signature}`)
+    } catch (err) {
+      console.error(err)
+      alert('Something went wrong.')
     }
   }
+
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
